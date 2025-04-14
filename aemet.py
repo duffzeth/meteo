@@ -8,6 +8,9 @@ aeropuertos = {
     "GCLP - Gran Canaria": {"lat": 27.9319, "lon": -15.3866}
 }
 
+# CLAVE API FIJA COMO STRING
+api_key = "VM0G7IbYRsyppjgGdnhkaIQIhSjuNr5i"
+
 # Función para consultar datos desde Windy API (solo parámetros compatibles)
 def obtener_datos_windy(lat, lon, api_key):
     url = "https://api.windy.com/api/point-forecast/v2"
@@ -85,8 +88,6 @@ def mostrar_tabla_html(data):
 # Streamlit UI
 st.title("🌤️ Consulta Meteorológica para Aeropuertos")
 
-api_key = st.secrets.get("WINDY_API_KEY", "VM0G7IbYRsyppjgGdnhkaIQIhSjuNr5i")
-
 aeropuerto = st.selectbox("Selecciona un aeropuerto", list(aeropuertos.keys()))
 dia = st.date_input("Selecciona el día", min_value=datetime.today(), max_value=datetime.today() + timedelta(days=3))
 
@@ -95,7 +96,7 @@ if st.button("Consultar"):
     datos = obtener_datos_windy(coords["lat"], coords["lon"], api_key)
 
     if datos and "wind" in datos["forecast"]:
-        idx = 0  # índice simple (se puede mejorar)
+        idx = 0  # índice simple (puede ajustarse para precisión por hora)
         viento = datos["forecast"]["wind"]["surface"]["u"]["values"][idx]
         temperatura = datos["forecast"]["temp"]["surface"]["values"][idx]
         lluvia = datos["forecast"]["precip"]["surface"]["values"][idx]
