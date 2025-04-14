@@ -10,7 +10,7 @@ aeropuertos = {
 
 # Función para consultar datos desde Windy API
 def obtener_datos_windy(lat, lon, api_key):
-    url = f"https://api.windy.com/api/point-forecast/v2"
+    url = "https://api.windy.com/api/point-forecast/v2"
     headers = {
         "Content-Type": "application/json",
         "Authorization": api_key
@@ -19,17 +19,17 @@ def obtener_datos_windy(lat, lon, api_key):
         "lat": lat,
         "lon": lon,
         "model": "gfs",
-        "parameters": ["wind", "temp", "clouds", "precip", "visibility"],
-        "levels": ["surface"],
-        "key": api_key
+        "parameters": ["wind", "temp", "clouds", "precip", "rh"],  # 'visibility' no siempre disponible
+        "levels": ["surface"]
     }
     response = requests.post(url, headers=headers, json=payload)
     if response.status_code == 200:
         return response.json()
     else:
+        st.error(f"Error Windy API: {response.status_code}")
         return None
 
-# Función para renderizar tabla HTML bonita
+# Función para mostrar la tabla
 def mostrar_tabla_html(data):
     html = f""" 
     <style>
@@ -64,18 +64,18 @@ def mostrar_tabla_html(data):
 
     <table class="weather-table">
         <tr>
-            <th>🌫️ Visibilidad</th>
-            <th>☁️ Techo de Nubes</th>
+            <th>☁️ Nubes</th>
             <th>💨 Viento</th>
             <th>🌧️ Lluvia</th>
             <th>🌡️ Temperatura</th>
+            <th>💧 Humedad</th>
         </tr>
         <tr>
-            <td>{data['visibilidad']}</td>
             <td>{data['nubes']}</td>
             <td>{data['viento']}</td>
             <td>{data['lluvia']}</td>
             <td>{data['temperatura']}</td>
+            <td>{data['humedad']}</td>
         </tr>
     </table>
     <div class="footer">🔎 Fuente: Windy API</div>
@@ -95,19 +95,19 @@ if st.button("Consultar"):
     datos = obtener_datos_windy(coords["lat"], coords["lon"], api_key)
 
     if datos and "wind" in datos["forecast"]:
-        idx = 0  # se puede mejorar con lógica horaria
-        visibilidad = datos["forecast"]["visibility"]["surface"]["values"][idx]
-        nubes = datos["forecast"]["clouds"]["surface"]["values"][idx]
+        idx = 0  # valor aproximado (puedes mejorar con timestamp)
         viento = datos["forecast"]["wind"]["surface"]["u"]["values"][idx]
-        lluvia = datos["forecast"]["precip"]["surface"]["values"][idx]
         temperatura = datos["forecast"]["temp"]["surface"]["values"][idx]
+        nubes = datos["forecast"]["clouds"]["surface"]["values"][idx]
+        lluvia = datos["forecast"]["precip"]["surface"]["values"][idx]
+        humedad = datos["forecast"]["rh"]["surface"]["values"][idx]
 
         info = {
-            "visibilidad": f"{visibilidad:.1f} km" if visibilidad > 10 else f"{visibilidad:.1f} km",
             "nubes": f"{int(nubes)}%",
             "viento": f"{int(viento)} km/h",
             "lluvia": "Sí" if lluvia > 0 else "No",
-            "temperatura": f"{temperatura:.1f}°C"
+            "temperatura": f"{temperatura:.1f}°C",
+            "humedad": f"{humedad:.0f}%"
         }
         mostrar_tabla_html(info)
     else:
