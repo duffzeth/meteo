@@ -226,7 +226,7 @@ if region and dia:
             <tbody>
         """
         for aeropuerto, horas in tabla_agrupada.items():
-        mostrar_tafor_si_corresponde(aeropuerto, horas)
+            mostrar_tafor_si_corresponde(aeropuerto, horas)
             for hora in horas:
                 vis, techo, dir_viento, viento, lluvia, temp, alerta = datos_prueba.get(hora, ("-", "-", "-", "-", "-", "-", "🟢"))
                 html += f"<tr><td>{aeropuerto}</td><td>{hora}</td><td>{vis}</td><td>{techo}</td><td>{dir_viento}</td><td>{viento}</td><td>{lluvia}</td><td>{temp}</td><td>{alerta}</td></tr>"
