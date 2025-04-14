@@ -8,7 +8,7 @@ aeropuertos = {
     "GCLP - Gran Canaria": {"lat": 27.9319, "lon": -15.3866}
 }
 
-# Función para consultar datos desde Windy API
+# Función para consultar datos desde Windy API (solo parámetros compatibles)
 def obtener_datos_windy(lat, lon, api_key):
     url = "https://api.windy.com/api/point-forecast/v2"
     headers = {
@@ -19,7 +19,7 @@ def obtener_datos_windy(lat, lon, api_key):
         "lat": lat,
         "lon": lon,
         "model": "gfs",
-        "parameters": ["wind", "temp", "clouds", "precip", "rh"],  # 'visibility' no siempre disponible
+        "parameters": ["wind", "temp", "precip"],
         "levels": ["surface"]
     }
     response = requests.post(url, headers=headers, json=payload)
@@ -27,6 +27,10 @@ def obtener_datos_windy(lat, lon, api_key):
         return response.json()
     else:
         st.error(f"Error Windy API: {response.status_code}")
+        try:
+            st.json(response.json())
+        except:
+            st.text(response.text)
         return None
 
 # Función para mostrar la tabla
@@ -64,18 +68,14 @@ def mostrar_tabla_html(data):
 
     <table class="weather-table">
         <tr>
-            <th>☁️ Nubes</th>
             <th>💨 Viento</th>
             <th>🌧️ Lluvia</th>
             <th>🌡️ Temperatura</th>
-            <th>💧 Humedad</th>
         </tr>
         <tr>
-            <td>{data['nubes']}</td>
             <td>{data['viento']}</td>
             <td>{data['lluvia']}</td>
             <td>{data['temperatura']}</td>
-            <td>{data['humedad']}</td>
         </tr>
     </table>
     <div class="footer">🔎 Fuente: Windy API</div>
@@ -95,19 +95,15 @@ if st.button("Consultar"):
     datos = obtener_datos_windy(coords["lat"], coords["lon"], api_key)
 
     if datos and "wind" in datos["forecast"]:
-        idx = 0  # valor aproximado (puedes mejorar con timestamp)
+        idx = 0  # índice simple (se puede mejorar)
         viento = datos["forecast"]["wind"]["surface"]["u"]["values"][idx]
         temperatura = datos["forecast"]["temp"]["surface"]["values"][idx]
-        nubes = datos["forecast"]["clouds"]["surface"]["values"][idx]
         lluvia = datos["forecast"]["precip"]["surface"]["values"][idx]
-        humedad = datos["forecast"]["rh"]["surface"]["values"][idx]
 
         info = {
-            "nubes": f"{int(nubes)}%",
             "viento": f"{int(viento)} km/h",
             "lluvia": "Sí" if lluvia > 0 else "No",
-            "temperatura": f"{temperatura:.1f}°C",
-            "humedad": f"{humedad:.0f}%"
+            "temperatura": f"{temperatura:.1f}°C"
         }
         mostrar_tabla_html(info)
     else:
