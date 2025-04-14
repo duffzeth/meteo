@@ -1,113 +1,625 @@
-import requests
-import json
-from datetime import datetime
-
-# --- Configuración ---
-# Tu clave API de AEMET (por seguridad, en entornos productivos se recomienda no incluirla en texto plano)
-API_KEY = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJsdWRvdmljay5nYXJjaWFAZ21haWwuY29tIiwianRpIjoiMDAzMTNiOGYtNTJmNS00NjE1LTlhZWQtZmI3ZmVkYWE2NWVmIiwiaXNzIjoiQUVNRVQiLCJpYXQiOjE3NDQ1MzkyMTQsInVzZXJJZCI6IjAwMzEzYjhmLTUyZjUtNDYxNS05YWVkLWZiN2ZlZGFhNjVlZiIsInJvbGUiOiIifQ.4ou1l_ZWTMwXt41ukxHp8RAuxzPXIx0QCQdehPTNgzo"
-# Código del aeropuerto
-ESTACION = "GCLP"
-# URL base para la predicción específica de aeropuertos según la documentación de AEMET:
-BASE_URL = f"https://opendata.aemet.es/opendata/api/prediccion/especifica/aeropuerto/{ESTACION}?api_key={API_KEY}"
-
-def fetch_data():
-    """
-    Hace la primera petición para obtener la URL de los datos detallados,
-    y luego descarga el contenido JSON de la predicción.
-    """
-    # Primera petición a la API de AEMET.
-    response = requests.get(BASE_URL)
-    if response.status_code != 200:
-        raise Exception(f"Error al obtener los datos (código {response.status_code})")
-
-    response_json = response.json()
-
-    # La respuesta contiene una clave "datos" que tiene la URL con el JSON real.
-    datos_url = response_json.get('datos')
-    if not datos_url:
-        raise Exception("No se encontró la URL de datos en la respuesta de AEMET.")
-
-    # Segunda petición para obtener el JSON con la predicción.
-    detailed_response = requests.get(datos_url)
-    if detailed_response.status_code != 200:
-        raise Exception(f"Error al obtener los datos detallados (código {detailed_response.status_code})")
-
-    return detailed_response.json()
-
-def extract_weather_for_wednesday(data):
-    """
-    Dado el JSON con la predicción, busca la información correspondiente al miércoles
-    y extrae los siguientes parámetros:
-      - Visibilidad
-      - Techo de nubes
-      - Vientos
-      - Lluvia
-      - Temperatura
-
-    Se asume que la estructura de 'data' tiene una clave "prediccion"
-    que a su vez contiene una lista "dia" con la información diaria.
-    """
-    # Verifica que la estructura contenga la clave "prediccion" y luego "dia"
-    prediccion = data.get("prediccion")
-    if not prediccion:
-        raise Exception("La respuesta no contiene la clave 'prediccion'.")
-    
-    dias = prediccion.get("dia")
-    if not dias:
-        raise Exception("La respuesta no contiene información diaria en 'dia'.")
-
-    # Buscar el día que corresponde a miércoles.
-    wednesday_data = None
-    for dia in dias:
-        fecha_str = dia.get("fecha")
-        if not fecha_str:
-            continue
-        try:
-            # Convertir la fecha al objeto datetime (se asume formato "YYYY-MM-DD")
-            fecha = datetime.strptime(fecha_str, "%Y-%m-%d")
-        except Exception as e:
-            continue
-        # datetime.weekday(): lunes=0, martes=1, miércoles=2, etc.
-        if fecha.weekday() == 2:
-            wednesday_data = dia
-            break
-
-    if not wednesday_data:
-        raise Exception("No se encontraron datos para el miércoles.")
-
-    # Extraer los parámetros solicitados.
-    # Es posible que los nombres de los campos varíen:
-    visibilidad = wednesday_data.get("visibilidad", "No disponible")
-    techo_nubes = wednesday_data.get("techo_nubes", "No disponible")
-    vientos = wednesday_data.get("viento", "No disponible")
-    lluvia = wednesday_data.get("lluvia", "No disponible")
-    temperatura = wednesday_data.get("temperatura", "No disponible")
-    
-    return {
-        "fecha": wednesday_data.get("fecha"),
-        "visibilidad": visibilidad,
-        "techo_nubes": techo_nubes,
-        "vientos": vientos,
-        "lluvia": lluvia,
-        "temperatura": temperatura
-    }
-
-def main():
-    try:
-        # Obtención de datos desde AEMET.
-        data = fetch_data()
-        # Extracción de los datos meteorológicos para el miércoles.
-        weather = extract_weather_for_wednesday(data)
-        print("Datos meteorológicos para el aeropuerto GCLP (miércoles):")
-        print("-" * 50)
-        print(f"Fecha:         {weather.get('fecha')}")
-        print(f"Visibilidad:   {weather.get('visibilidad')}")
-        print(f"Techo de nubes:{weather.get('techo_nubes')}")
-        print(f"Vientos:       {weather.get('vientos')}")
-        print(f"Lluvia:        {weather.get('lluvia')}")
-        print(f"Temperatura:   {weather.get('temperatura')}")
-    except Exception as e:
-        print("Error:", e)
-
-if __name__ == "__main__":
-    main()
+[ {
+  "origen" : {
+    "productor" : "Agencia Estatal de Meteorología - AEMET. Gobierno de España",
+    "web" : "https://www.aemet.es",
+    "enlace" : "https://www.aemet.es/es/eltiempo/prediccion/municipios/telde-id35026",
+    "language" : "es",
+    "copyright" : "© AEMET. Autorizado el uso de la información y su reproducción citando a AEMET como autora de la misma.",
+    "notaLegal" : "https://www.aemet.es/es/nota_legal"
+  },
+  "elaborado" : "2025-04-14T13:22:11",
+  "nombre" : "Telde",
+  "provincia" : "Las Palmas (Gran Canaria)",
+  "prediccion" : {
+    "dia" : [ {
+      "probPrecipitacion" : [ {
+        "value" : 0,
+        "periodo" : "00-24"
+      }, {
+        "value" : 0,
+        "periodo" : "00-12"
+      }, {
+        "value" : 10,
+        "periodo" : "12-24"
+      }, {
+        "value" : 0,
+        "periodo" : "00-06"
+      }, {
+        "value" : 0,
+        "periodo" : "06-12"
+      }, {
+        "value" : 0,
+        "periodo" : "12-18"
+      }, {
+        "value" : 10,
+        "periodo" : "18-24"
+      } ],
+      "cotaNieveProv" : [ {
+        "value" : "",
+        "periodo" : "00-24"
+      }, {
+        "value" : "",
+        "periodo" : "00-12"
+      }, {
+        "value" : "",
+        "periodo" : "12-24"
+      }, {
+        "value" : "",
+        "periodo" : "00-06"
+      }, {
+        "value" : "",
+        "periodo" : "06-12"
+      }, {
+        "value" : "",
+        "periodo" : "12-18"
+      }, {
+        "value" : "",
+        "periodo" : "18-24"
+      } ],
+      "estadoCielo" : [ {
+        "value" : "",
+        "periodo" : "00-24",
+        "descripcion" : ""
+      }, {
+        "value" : "",
+        "periodo" : "00-12",
+        "descripcion" : ""
+      }, {
+        "value" : "15",
+        "periodo" : "12-24",
+        "descripcion" : "Muy nuboso"
+      }, {
+        "value" : "",
+        "periodo" : "00-06",
+        "descripcion" : ""
+      }, {
+        "value" : "16",
+        "periodo" : "06-12",
+        "descripcion" : "Cubierto"
+      }, {
+        "value" : "15",
+        "periodo" : "12-18",
+        "descripcion" : "Muy nuboso"
+      }, {
+        "value" : "14",
+        "periodo" : "18-24",
+        "descripcion" : "Nuboso"
+      } ],
+      "viento" : [ {
+        "direccion" : "",
+        "velocidad" : 0,
+        "periodo" : "00-24"
+      }, {
+        "direccion" : "",
+        "velocidad" : 0,
+        "periodo" : "00-12"
+      }, {
+        "direccion" : "N",
+        "velocidad" : 20,
+        "periodo" : "12-24"
+      }, {
+        "direccion" : "NO",
+        "velocidad" : 15,
+        "periodo" : "00-06"
+      }, {
+        "direccion" : "N",
+        "velocidad" : 20,
+        "periodo" : "06-12"
+      }, {
+        "direccion" : "N",
+        "velocidad" : 20,
+        "periodo" : "12-18"
+      }, {
+        "direccion" : "N",
+        "velocidad" : 25,
+        "periodo" : "18-24"
+      } ],
+      "rachaMax" : [ {
+        "value" : "",
+        "periodo" : "00-24"
+      }, {
+        "value" : "",
+        "periodo" : "00-12"
+      }, {
+        "value" : "",
+        "periodo" : "12-24"
+      }, {
+        "value" : "",
+        "periodo" : "00-06"
+      }, {
+        "value" : "",
+        "periodo" : "06-12"
+      }, {
+        "value" : "",
+        "periodo" : "12-18"
+      }, {
+        "value" : "40",
+        "periodo" : "18-24"
+      } ],
+      "temperatura" : {
+        "maxima" : 23,
+        "minima" : 16,
+        "dato" : [ {
+          "value" : 17,
+          "hora" : 6
+        }, {
+          "value" : 21,
+          "hora" : 12
+        }, {
+          "value" : 20,
+          "hora" : 18
+        }, {
+          "value" : 17,
+          "hora" : 24
+        } ]
+      },
+      "sensTermica" : {
+        "maxima" : 23,
+        "minima" : 16,
+        "dato" : [ {
+          "value" : 17,
+          "hora" : 6
+        }, {
+          "value" : 21,
+          "hora" : 12
+        }, {
+          "value" : 20,
+          "hora" : 18
+        }, {
+          "value" : 17,
+          "hora" : 24
+        } ]
+      },
+      "humedadRelativa" : {
+        "maxima" : 85,
+        "minima" : 60,
+        "dato" : [ {
+          "value" : 85,
+          "hora" : 6
+        }, {
+          "value" : 60,
+          "hora" : 12
+        }, {
+          "value" : 60,
+          "hora" : 18
+        }, {
+          "value" : 75,
+          "hora" : 24
+        } ]
+      },
+      "uvMax" : 10,
+      "fecha" : "2025-04-14T00:00:00"
+    }, {
+      "probPrecipitacion" : [ {
+        "value" : 95,
+        "periodo" : "00-24"
+      }, {
+        "value" : 50,
+        "periodo" : "00-12"
+      }, {
+        "value" : 85,
+        "periodo" : "12-24"
+      }, {
+        "value" : 10,
+        "periodo" : "00-06"
+      }, {
+        "value" : 20,
+        "periodo" : "06-12"
+      }, {
+        "value" : 55,
+        "periodo" : "12-18"
+      }, {
+        "value" : 25,
+        "periodo" : "18-24"
+      } ],
+      "cotaNieveProv" : [ {
+        "value" : "1900",
+        "periodo" : "00-24"
+      }, {
+        "value" : "1900",
+        "periodo" : "00-12"
+      }, {
+        "value" : "",
+        "periodo" : "12-24"
+      }, {
+        "value" : "",
+        "periodo" : "00-06"
+      }, {
+        "value" : "2000",
+        "periodo" : "06-12"
+      }, {
+        "value" : "",
+        "periodo" : "12-18"
+      }, {
+        "value" : "",
+        "periodo" : "18-24"
+      } ],
+      "estadoCielo" : [ {
+        "value" : "43",
+        "periodo" : "00-24",
+        "descripcion" : "Intervalos nubosos con lluvia escasa"
+      }, {
+        "value" : "43",
+        "periodo" : "00-12",
+        "descripcion" : "Intervalos nubosos con lluvia escasa"
+      }, {
+        "value" : "44",
+        "periodo" : "12-24",
+        "descripcion" : "Nuboso con lluvia escasa"
+      }, {
+        "value" : "13n",
+        "periodo" : "00-06",
+        "descripcion" : "Intervalos nubosos"
+      }, {
+        "value" : "43",
+        "periodo" : "06-12",
+        "descripcion" : "Intervalos nubosos con lluvia escasa"
+      }, {
+        "value" : "44",
+        "periodo" : "12-18",
+        "descripcion" : "Nuboso con lluvia escasa"
+      }, {
+        "value" : "15",
+        "periodo" : "18-24",
+        "descripcion" : "Muy nuboso"
+      } ],
+      "viento" : [ {
+        "direccion" : "N",
+        "velocidad" : 25,
+        "periodo" : "00-24"
+      }, {
+        "direccion" : "N",
+        "velocidad" : 25,
+        "periodo" : "00-12"
+      }, {
+        "direccion" : "N",
+        "velocidad" : 25,
+        "periodo" : "12-24"
+      }, {
+        "direccion" : "N",
+        "velocidad" : 20,
+        "periodo" : "00-06"
+      }, {
+        "direccion" : "N",
+        "velocidad" : 25,
+        "periodo" : "06-12"
+      }, {
+        "direccion" : "N",
+        "velocidad" : 25,
+        "periodo" : "12-18"
+      }, {
+        "direccion" : "N",
+        "velocidad" : 25,
+        "periodo" : "18-24"
+      } ],
+      "rachaMax" : [ {
+        "value" : "45",
+        "periodo" : "00-24"
+      }, {
+        "value" : "45",
+        "periodo" : "00-12"
+      }, {
+        "value" : "45",
+        "periodo" : "12-24"
+      }, {
+        "value" : "",
+        "periodo" : "00-06"
+      }, {
+        "value" : "45",
+        "periodo" : "06-12"
+      }, {
+        "value" : "40",
+        "periodo" : "12-18"
+      }, {
+        "value" : "40",
+        "periodo" : "18-24"
+      } ],
+      "temperatura" : {
+        "maxima" : 23,
+        "minima" : 16,
+        "dato" : [ {
+          "value" : 16,
+          "hora" : 6
+        }, {
+          "value" : 21,
+          "hora" : 12
+        }, {
+          "value" : 19,
+          "hora" : 18
+        }, {
+          "value" : 17,
+          "hora" : 24
+        } ]
+      },
+      "sensTermica" : {
+        "maxima" : 23,
+        "minima" : 16,
+        "dato" : [ {
+          "value" : 16,
+          "hora" : 6
+        }, {
+          "value" : 21,
+          "hora" : 12
+        }, {
+          "value" : 19,
+          "hora" : 18
+        }, {
+          "value" : 17,
+          "hora" : 24
+        } ]
+      },
+      "humedadRelativa" : {
+        "maxima" : 75,
+        "minima" : 55,
+        "dato" : [ {
+          "value" : 75,
+          "hora" : 6
+        }, {
+          "value" : 55,
+          "hora" : 12
+        }, {
+          "value" : 70,
+          "hora" : 18
+        }, {
+          "value" : 70,
+          "hora" : 24
+        } ]
+      },
+      "uvMax" : 10,
+      "fecha" : "2025-04-15T00:00:00"
+    }, {
+      "probPrecipitacion" : [ {
+        "value" : 55,
+        "periodo" : "00-24"
+      }, {
+        "value" : 35,
+        "periodo" : "00-12"
+      }, {
+        "value" : 20,
+        "periodo" : "12-24"
+      } ],
+      "cotaNieveProv" : [ {
+        "value" : "",
+        "periodo" : "00-24"
+      }, {
+        "value" : "",
+        "periodo" : "00-12"
+      }, {
+        "value" : "",
+        "periodo" : "12-24"
+      } ],
+      "estadoCielo" : [ {
+        "value" : "45",
+        "periodo" : "00-24",
+        "descripcion" : "Muy nuboso con lluvia escasa"
+      }, {
+        "value" : "45",
+        "periodo" : "00-12",
+        "descripcion" : "Muy nuboso con lluvia escasa"
+      }, {
+        "value" : "15",
+        "periodo" : "12-24",
+        "descripcion" : "Muy nuboso"
+      } ],
+      "viento" : [ {
+        "direccion" : "N",
+        "velocidad" : 25,
+        "periodo" : "00-24"
+      }, {
+        "direccion" : "N",
+        "velocidad" : 25,
+        "periodo" : "00-12"
+      }, {
+        "direccion" : "N",
+        "velocidad" : 25,
+        "periodo" : "12-24"
+      } ],
+      "rachaMax" : [ {
+        "value" : "45",
+        "periodo" : "00-24"
+      }, {
+        "value" : "45",
+        "periodo" : "00-12"
+      }, {
+        "value" : "45",
+        "periodo" : "12-24"
+      } ],
+      "temperatura" : {
+        "maxima" : 21,
+        "minima" : 16,
+        "dato" : [ ]
+      },
+      "sensTermica" : {
+        "maxima" : 21,
+        "minima" : 16,
+        "dato" : [ ]
+      },
+      "humedadRelativa" : {
+        "maxima" : 70,
+        "minima" : 55,
+        "dato" : [ ]
+      },
+      "uvMax" : 10,
+      "fecha" : "2025-04-16T00:00:00"
+    }, {
+      "probPrecipitacion" : [ {
+        "value" : 30,
+        "periodo" : "00-24"
+      }, {
+        "value" : 25,
+        "periodo" : "00-12"
+      }, {
+        "value" : 5,
+        "periodo" : "12-24"
+      } ],
+      "cotaNieveProv" : [ {
+        "value" : "",
+        "periodo" : "00-24"
+      }, {
+        "value" : "",
+        "periodo" : "00-12"
+      }, {
+        "value" : "",
+        "periodo" : "12-24"
+      } ],
+      "estadoCielo" : [ {
+        "value" : "14",
+        "periodo" : "00-24",
+        "descripcion" : "Nuboso"
+      }, {
+        "value" : "15",
+        "periodo" : "00-12",
+        "descripcion" : "Muy nuboso"
+      }, {
+        "value" : "12",
+        "periodo" : "12-24",
+        "descripcion" : "Poco nuboso"
+      } ],
+      "viento" : [ {
+        "direccion" : "N",
+        "velocidad" : 25,
+        "periodo" : "00-24"
+      }, {
+        "direccion" : "N",
+        "velocidad" : 25,
+        "periodo" : "00-12"
+      }, {
+        "direccion" : "N",
+        "velocidad" : 25,
+        "periodo" : "12-24"
+      } ],
+      "rachaMax" : [ {
+        "value" : "45",
+        "periodo" : "00-24"
+      }, {
+        "value" : "40",
+        "periodo" : "00-12"
+      }, {
+        "value" : "45",
+        "periodo" : "12-24"
+      } ],
+      "temperatura" : {
+        "maxima" : 22,
+        "minima" : 16,
+        "dato" : [ ]
+      },
+      "sensTermica" : {
+        "maxima" : 22,
+        "minima" : 16,
+        "dato" : [ ]
+      },
+      "humedadRelativa" : {
+        "maxima" : 75,
+        "minima" : 55,
+        "dato" : [ ]
+      },
+      "uvMax" : 10,
+      "fecha" : "2025-04-17T00:00:00"
+    }, {
+      "probPrecipitacion" : [ {
+        "value" : 55
+      } ],
+      "cotaNieveProv" : [ {
+        "value" : ""
+      } ],
+      "estadoCielo" : [ {
+        "value" : "44",
+        "descripcion" : "Nuboso con lluvia escasa"
+      } ],
+      "viento" : [ {
+        "direccion" : "N",
+        "velocidad" : 25
+      } ],
+      "rachaMax" : [ {
+        "value" : "50"
+      } ],
+      "temperatura" : {
+        "maxima" : 23,
+        "minima" : 16,
+        "dato" : [ ]
+      },
+      "sensTermica" : {
+        "maxima" : 23,
+        "minima" : 16,
+        "dato" : [ ]
+      },
+      "humedadRelativa" : {
+        "maxima" : 80,
+        "minima" : 60,
+        "dato" : [ ]
+      },
+      "uvMax" : 9,
+      "fecha" : "2025-04-18T00:00:00"
+    }, {
+      "probPrecipitacion" : [ {
+        "value" : 100
+      } ],
+      "cotaNieveProv" : [ {
+        "value" : "1800"
+      } ],
+      "estadoCielo" : [ {
+        "value" : "25",
+        "descripcion" : "Muy nuboso con lluvia"
+      } ],
+      "viento" : [ {
+        "direccion" : "N",
+        "velocidad" : 30
+      } ],
+      "rachaMax" : [ {
+        "value" : "55"
+      } ],
+      "temperatura" : {
+        "maxima" : 21,
+        "minima" : 15,
+        "dato" : [ ]
+      },
+      "sensTermica" : {
+        "maxima" : 21,
+        "minima" : 15,
+        "dato" : [ ]
+      },
+      "humedadRelativa" : {
+        "maxima" : 80,
+        "minima" : 60,
+        "dato" : [ ]
+      },
+      "fecha" : "2025-04-19T00:00:00"
+    }, {
+      "probPrecipitacion" : [ {
+        "value" : 95
+      } ],
+      "cotaNieveProv" : [ {
+        "value" : "1900"
+      } ],
+      "estadoCielo" : [ {
+        "value" : "45",
+        "descripcion" : "Muy nuboso con lluvia escasa"
+      } ],
+      "viento" : [ {
+        "direccion" : "N",
+        "velocidad" : 25
+      } ],
+      "rachaMax" : [ {
+        "value" : "55"
+      } ],
+      "temperatura" : {
+        "maxima" : 21,
+        "minima" : 15,
+        "dato" : [ ]
+      },
+      "sensTermica" : {
+        "maxima" : 21,
+        "minima" : 15,
+        "dato" : [ ]
+      },
+      "humedadRelativa" : {
+        "maxima" : 80,
+        "minima" : 60,
+        "dato" : [ ]
+      },
+      "fecha" : "2025-04-20T00:00:00"
+    } ]
+  },
+  "id" : -30510,
+  "version" : 1.0
+} ]
