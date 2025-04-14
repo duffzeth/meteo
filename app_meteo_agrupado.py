@@ -46,6 +46,15 @@ datos_embebidos = {
     }
 }
 
+
+datos_prueba = {
+    "06H00": ("10 km", "5000 ft", "045°", "15 kt", "No", "21°C", "🟢"),
+    "10H00": ("12 km", "6000 ft", "090°", "18 kt", "No", "24°C", "🟢"),
+    "14H00": ("15 km", "7000 ft", "135°", "20 kt", "No", "26°C", "🟢"),
+    "18H00": ("12 km", "5000 ft", "180°", "17 kt", "No", "22°C", "🟢"),
+    "22H00": ("8 km", "4000 ft", "225°", "12 kt", "No", "19°C", "🟢")
+}
+
 def mostrar_tabla_html(aeropuerto, horas):
     st.markdown(f"<h4 style='margin-top: 2rem;'>✈️ {aeropuerto}</h4>", unsafe_allow_html=True)
     html = """
