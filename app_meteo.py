@@ -36,7 +36,7 @@ datos_embebidos = {
         "Domingo": [("GMMH", "06H00")]
     },
     "Península": {
-        "Lunes": [("LESO", "10H00"), ("LEGR", "09H00"), ("LEPA", "10H00"), ("LEMI", "16H00"), ("LEXJ", "18H00"), ("LEVX", "18H00"), ("LEVC", "10H00", "16H00"), ("LEVD", "12H00"), ("LEJR", "17H00"), ("LEZG", "11H00")],
+        "Lunes": [("LESO", "10H00"), ("LEGR", "09H00"), ("LEPA", "10H00"), ("LEMI", "16H00"), ("LEXJ", "18H00"), ("LEVX", "18H00"), ("LEVC", "10H00"), ("LEVD", "12H00"), ("LEJR", "17H00"), ("LEZG", "11H00")],
         "Martes": [("LEBZ", "10H00"), ("LEGR", "10H00"), ("LEAM", "16H00"), ("LEBA", "16H00"), ("LEAS", "10H00"), ("LEPA", "16H00"), ("LEPP", "16H00"), ("LEMI", "09H00"), ("LEVX", "10H00"), ("LEJR", "17H00")],
         "Miércoles": [("LEBA", "09H00")],
         "Jueves": [("LEGR", "10H00"), ("LEXJ", "12H00")],
