@@ -2,6 +2,36 @@
 import streamlit as st
 from datetime import datetime, timedelta
 
+def extraer_datos_tafor(taf):
+    import re
+
+    visibilidad = "-"
+    viento = "-"
+    techo = "-"
+    lluvia = "No"
+
+    vis_match = re.search(r"\s(\d{4})\s", taf)
+    if vis_match:
+        vis_metros = int(vis_match.group(1))
+        visibilidad = f"{vis_metros} m" if vis_metros < 9999 else "+10 km"
+
+    viento_match = re.search(r"\s(\d{3})(\d{2})KT", taf)
+    if viento_match:
+        dir_viento = viento_match.group(1)
+        vel_viento = viento_match.group(2)
+        viento = f"{vel_viento} kt ({dir_viento}°)"
+
+    techo_match = re.search(r"(BKN|OVC)(\d{3})", taf)
+    if techo_match:
+        altura_ft = int(techo_match.group(2)) * 100
+        techo = f"{altura_ft} ft"
+
+    if "RA" in taf or "SHRA" in taf:
+        lluvia = "Sí"
+
+    return visibilidad, techo, viento, lluvia
+
+
 import requests
 from bs4 import BeautifulSoup
 
@@ -118,7 +148,28 @@ dia_idx = dias_nombre[dia]
 delta_dias = (dia_idx - hoy_idx) % 7
 fecha_base = hoy + timedelta(days=delta_dias)
 
+
 def mostrar_tafor_si_corresponde(icao, horas):
+    datos_tafor = {}
+    for hora_str in horas:
+        hora = int(hora_str[:2])
+        fecha_consulta = fecha_base.replace(hour=hora, minute=0, second=0, microsecond=0)
+        if fecha_consulta <= (datetime.utcnow() + timedelta(hours=24)):
+            st.markdown(f"### 🛫 TAFOR {icao} - {hora_str}")
+            tafor = obtener_tafor_ogimet(icao)
+            st.code(tafor, language='text')
+            vis, techo, viento, lluvia = extraer_datos_tafor(tafor)
+            datos_tafor[hora_str] = {
+                'vis': vis,
+                'techo': techo,
+                'viento': viento,
+                'lluvia': lluvia,
+                'temp': '-',
+                'alerta': '🟢',
+                'fuente': 'OGIMET/TAFOR'
+            }
+    return datos_tafor
+
     for hora_str in horas:
         hora = int(hora_str[:2])
         fecha_consulta = fecha_base.replace(hour=hora, minute=0, second=0, microsecond=0)
