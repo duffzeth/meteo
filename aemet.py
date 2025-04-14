@@ -6,7 +6,7 @@ headers = {
     'cache-control': "no-cache"
     }
 
-conn.request("GET", "/opendata/api/valores/climatologicos/inventarioestaciones/todasestaciones/?api_key=jyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJqbW9udGVyb2dAYWVtZXQuZXMiLCJqdGkiOiI3NDRiYmVhMy02NDEyLTQxYWMtYmYzOC01MjhlZWJlM2FhMWEiLCJleHAiOjE0NzUwNTg3ODcsImlzcyI6IkFFTUVUIiwiaWF0IjoxNDc0NjI2Nzg3LCJ1c2VySWQiOiI3NDRiYmVhMy02NDEyLTQxYWMtYmYzOC01MjhlZWJlM2FhMWEiLCJyb2xlIjoiIn0.xh3LstTlsP9h5cxz3TLmYF4uJwhOKzA0B6-vH8lPGGw", headers=headers)
+conn.request("GET", "/opendata/api/valores/climatologicos/inventarioestaciones/todasestaciones/?api_key=eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJsdWRvdmljay5nYXJjaWFAZ21haWwuY29tIiwianRpIjoiMDAzMTNiOGYtNTJmNS00NjE1LTlhZWQtZmI3ZmVkYWE2NWVmIiwiaXNzIjoiQUVNRVQiLCJpYXQiOjE3NDQ1MzkyMTQsInVzZXJJZCI6IjAwMzEzYjhmLTUyZjUtNDYxNS05YWVkLWZiN2ZlZGFhNjVlZiIsInJvbGUiOiIifQ.4ou1l_ZWTMwXt41ukxHp8RAuxzPXIx0QCQdehPTNgzo", headers=headers)
 
 res = conn.getresponse()
 data = res.read()
