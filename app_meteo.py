@@ -14,7 +14,7 @@ dias_trad = {
 }
 dias_disponibles = [dias_trad[d] for d in dias_validos]
 
-regiones = ["", "África", "Canarias", "Funchal", "Madrid" "Península"]
+regiones = ["", "África", "Canarias", "Funchal", "Madrid", "Península"]
 region = st.selectbox("Selecciona la región", regiones)
 dia = st.selectbox("Selecciona el día de la semana", [""] + dias_disponibles)
 
