@@ -63,7 +63,7 @@ if consultar:
                 "🌡️ Máx (°C)": data["temperature_max"],
                 "🌡️ Mín (°C)": data["temperature_min"],
                 "🌬️ Viento medio (kt)": [round(v * 1.94384, 1) for v in data["windspeed_mean"]],
-                "🧭 Dirección (°)": get_field("winddirection"),
+                "🧭 Dirección (°)": data["winddirection"],
                 "☁️ Nubosidad (%)": get_field("cloudcover"),
                 "☁️ Techo nubes (m)": get_field("cloudbase_mean"),
                 "🌧️ Precipitación (mm)": data["precipitation"],
