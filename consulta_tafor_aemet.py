@@ -32,7 +32,7 @@ if consultar:
     st.write("URL:", url)
     response = requests.get(url)
     if response.status_code == 200:
-        data = response.json()["data_1h"]
+        data = response.json()["data-1h"]
 
         # Procesar datos por fecha seleccionada
         df = pd.DataFrame({
