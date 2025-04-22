@@ -36,11 +36,13 @@ if consultar:
 
         # Procesar datos por fecha seleccionada
         df = pd.DataFrame({
-            "FechaHora": data["time"],
-            "Temperatura (°C)": data["temperature"],
-            "Viento (km/h)": data["windspeed"],
-            "Humedad (%)": data.get("relativehumidity", [None]*len(data["temperature"])),
-            "Nubosidad (%)": data.get("cloudcover", [None]*len(data["temperature"]))
+            "Fecha": data["time"],
+            "Temp. máx (°C)": data["temperature_max"],
+            "Temp. mín (°C)": data["temperature_min"],
+            "Viento medio (km/h)": data["windspeed_mean"],
+            "Precipitación (mm)": data["precipitation"],
+            "Humedad (%)": data["relativehumidity_mean"],
+            "Prob. lluvia (%)": data["precipitation_probability"]
         })
 
         df["FechaHora"] = pd.to_datetime(df["FechaHora"])
