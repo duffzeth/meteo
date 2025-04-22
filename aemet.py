@@ -4,11 +4,10 @@ import datetime
 import pandas as pd
 
 # === Configuración ===
-#Gqtw5BUEcQDIk4eb
-#1uZEsTaN95h6qf0v
-API_KEY = "gVphN31ARLcKGzX7"
-BASE_URL = "https://my.meteoblue.com/packages/basic-1h_basic-day_clouds-1h_clouds-day"
+API_KEY = "Gqtw5BUEcQDIk4eb"
+BASE_URL = "https://my.meteoblue.com/packages/basic-1h_clouds-1h"
 
+# Coordenadas de los aeropuertos
 aeropuertos = {
     "GCLP - Gran Canaria": (27.9319, -15.3866),
     "GCXO - Tenerife Norte": (28.4827, -16.3415),
@@ -19,6 +18,7 @@ aeropuertos = {
     "GCGM - La Gomera": (28.0296, -17.2146),
 }
 
+# Función para convertir pictocode a emoji
 def pictocode_to_emoji(code):
     if code == 1:
         return "☀️"
@@ -31,6 +31,7 @@ def pictocode_to_emoji(code):
     else:
         return "⛈️"
 
+# Formatear visibilidad con colores
 def visibilidad_color(km):
     if km >= 10:
         return f"🟢 {km} km"
@@ -39,6 +40,7 @@ def visibilidad_color(km):
     else:
         return f"🔴 {km} km"
 
+# Formatear alerta por temperatura
 def alerta(temp):
     if temp >= 30:
         return "🔴"
@@ -47,10 +49,9 @@ def alerta(temp):
     else:
         return "🟢"
 
-# === Interfaz ===
+# === Interfaz Streamlit ===
 st.set_page_config(page_title="Meteo Aeropuertos Canarias", layout="centered")
-
-st.markdown("<h1 style='text-align: center;'>🌦️ Consulta meteorológica - Aeropuertos de Canarias</h1>", unsafe_allow_html=True)
+st.title("🌦️ Consulta meteorológica - Aeropuertos de Canarias")
 
 aeropuerto = st.selectbox("✈️ Aeropuerto", list(aeropuertos.keys()))
 fecha = st.date_input(
@@ -86,7 +87,7 @@ if consultar:
                 "Icono": [pictocode_to_emoji(c) for c in data.get("pictocode", [0]*len(data["time"]))]
             })
 
-            # Filtrar por fecha y franjas horarias
+            # Filtrar fecha y franjas horarias
             fecha_str = fecha.strftime("%Y-%m-%d")
             df["Hora"] = df["FechaHora"].dt.strftime("%H:%M")
             df["Fecha"] = df["FechaHora"].dt.strftime("%Y-%m-%d")
@@ -96,17 +97,24 @@ if consultar:
             if df.empty:
                 st.warning("⚠️ No hay datos para esa fecha y franjas horarias.")
             else:
+                # Procesar visibilidad
                 df["👁️ Visibilidad (m)"] = df["👁️ Visibilidad (m)"].apply(
                     lambda m: visibilidad_color(round(m / 1000, 1)) if isinstance(m, (int, float)) else "—"
                 )
+
+                # Agregar columna de alerta
                 df["🚨 Alerta"] = df["🌡️ Temp (°C)"].apply(alerta)
                 df["📡 Origen"] = "Meteoblue"
 
+                # Reordenar y mostrar
                 columnas = ["Hora", "🌡️ Temp (°C)", "🌬️ Viento (kt)", "🧭 Dirección (°)",
                             "☁️ Nubosidad (%)", "☁️ Techo nubes (m)", "👁️ Visibilidad (m)",
                             "Icono", "🚨 Alerta", "📡 Origen"]
 
-               
+                st.markdown(
+                    df[columnas].to_html(index=False, justify="center", escape=False),
+                    unsafe_allow_html=True
+                )
         else:
             st.error("❌ La respuesta no contiene 'data_1h'.")
     else:
