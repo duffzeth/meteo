@@ -106,34 +106,7 @@ if consultar:
                             "☁️ Nubosidad (%)", "☁️ Techo nubes (m)", "👁️ Visibilidad (m)",
                             "Icono", "🚨 Alerta", "📡 Origen"]
 
-                # Estilo HTML para tabla
-                html_table = f"""
-                <style>
-                    .custom-table {{
-                        margin: auto;
-                        border-collapse: collapse;
-                        font-family: Arial, sans-serif;
-                    }}
-                    .custom-table th, .custom-table td {{
-                        border: 1px solid #ddd;
-                        padding: 10px;
-                        text-align: center;
-                    }}
-                    .custom-table th {{
-                        background-color: #f2f2f2;
-                        color: #333;
-                    }}
-                    .custom-table tr:nth-child(even) {{ background-color: #f9f9f9; }}
-                    .custom-table tr:hover {{ background-color: #f1f1f1; }}
-                </style>
-
-                <div style="text-align: center;">
-                    <h3>🌍 Resultados meteorológicos para {aeropuerto.split('-')[0].strip()} ({fecha_str})</h3>
-                    {df[columnas].to_html(classes='custom-table', index=False, escape=False)}
-                </div>
-                """
-
-                st.markdown(html_table, unsafe_allow_html=True)
+               
         else:
             st.error("❌ La respuesta no contiene 'data_1h'.")
     else:
