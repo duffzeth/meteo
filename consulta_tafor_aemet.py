@@ -55,6 +55,7 @@ if consultar:
     response = requests.get(url)
     if response.status_code == 200:
         response_json = response.json()
+        
         if "data_day" in response_json and "data_1h" in response_json:
     data_day = response_json["data_day"]
     data_1h = response_json["data_1h"]
