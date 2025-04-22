@@ -45,7 +45,12 @@ def pictocode_to_emoji(code):
 
 if consultar:
     lat, lon = aeropuertos[aeropuerto]
-    url = f"{BASE_URL}?lat={lat}&lon={lon}&apikey={API_KEY}&format=json"
+    url = (
+    f"{BASE_URL}?lat={lat}&lon={lon}"
+    f"&apikey={API_KEY}&format=json"
+    f"&windspeed=kn&winddirection=degree"
+)
+
 
     response = requests.get(url)
     if response.status_code == 200:
