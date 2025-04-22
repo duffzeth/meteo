@@ -3,7 +3,7 @@ import requests
 import datetime
 import pandas as pd
 
-# Configuración de aeropuertos con coordenadas
+# Coordenadas de aeropuertos
 aeropuertos = {
     "GCLP - Gran Canaria": (27.9319, -15.3866),
     "GCXO - Tenerife Norte": (28.4827, -16.3415),
@@ -17,66 +17,80 @@ aeropuertos = {
 API_KEY = "Gqtw5BUEcQDIk4eb"
 BASE_URL = "https://my.meteoblue.com/packages/basic-1h_basic-day_clouds-1h_clouds-day"
 
-# Streamlit UI
+# Configuración visual
 st.set_page_config(page_title="Meteo Aeropuertos Canarias", layout="centered")
 st.title("🌦️ Consulta meteorológica - Aeropuertos de Canarias")
 
-aeropuerto = st.selectbox("Selecciona un aeropuerto", list(aeropuertos.keys()))
+# UI
+aeropuerto = st.selectbox("✈️ Selecciona un aeropuerto", list(aeropuertos.keys()))
 fecha = st.date_input(
-    "Selecciona una fecha (máximo 3 días vista)",
+    "📅 Selecciona una fecha (máx. 3 días vista)",
     min_value=datetime.date.today(),
     max_value=datetime.date.today() + datetime.timedelta(days=3)
 )
-consultar = st.button("Consultar")
+consultar = st.button("🔍 Consultar")
+
+# Función pictograma
+def pictocode_to_emoji(code):
+    if code == 1:
+        return "☀️"
+    elif code == 2:
+        return "🌤️"
+    elif code in [3, 4]:
+        return "☁️"
+    elif code in [5, 6]:
+        return "🌧️"
+    else:
+        return "⛈️"
 
 if consultar:
     lat, lon = aeropuertos[aeropuerto]
     url = f"{BASE_URL}?lat={lat}&lon={lon}&apikey={API_KEY}&format=json"
-    
-    st.write("URL:", url)
+
     response = requests.get(url)
     if response.status_code == 200:
         response_json = response.json()
         if "data_day" in response_json:
             data = response_json["data_day"]
 
+            def get_field(name, default=0):
+                return data[name] if name in data else [default] * len(data["time"])
+
             df = pd.DataFrame({
                 "Fecha": data["time"],
-                "Temp. máx (°C)": data["temperature_max"],
-                "Temp. mín (°C)": data["temperature_min"],
-                "Temp. media (°C)": data["temperature_mean"],
-                "Viento medio (kt)": [round(v * 1.94384, 1) for v in data["windspeed_mean"]],
-                "Dirección viento (°)": data["winddirection":"degree"],
-                #"Nubosidad (%)": get_field("cloudcover"),
-                #"Techo nubes (m)": get_field("cloudbase_mean"),
-                "Precipitación (mm)": data["precipitation"],
-                "Humedad (%)": data["relativehumidity_mean"],
-                "Prob. lluvia (%)": data["precipitation_probability"]
+                "🌡️ Máx (°C)": data["temperature_max"],
+                "🌡️ Mín (°C)": data["temperature_min"],
+                "🌬️ Viento medio (kt)": [round(v * 1.94384, 1) for v in get_field("windspeed_mean")],
+                "🧭 Dirección (°)": get_field("winddirection", "N/A"),
+                "☁️ Nubosidad (%)": get_field("cloudcover", "N/A"),
+                "☁️ Techo nubes (m)": get_field("cloudbase_mean", "N/A"),
+                "🌧️ Precipitación (mm)": get_field("precipitation"),
+                "💧 Humedad (%)": get_field("relativehumidity_mean"),
+                "🌂 Prob. lluvia (%)": get_field("precipitation_probability"),
+                "Icono": [pictocode_to_emoji(c) for c in get_field("pictocode")]
             })
 
-            # Filtrar por la fecha seleccionada
             df = df[df["Fecha"] == fecha.strftime("%Y-%m-%d")]
 
             if df.empty:
-                st.warning("No hay datos disponibles para la fecha seleccionada.")
+                st.warning("⚠️ No hay datos para la fecha seleccionada.")
             else:
-                # Agregar alerta por temperatura máxima
-                def alerta(temp_max):
-                    if temp_max >= 30:
+                def alerta(temp):
+                    if temp >= 30:
                         return "🔴"
-                    elif temp_max >= 25:
+                    elif temp >= 25:
                         return "🟡"
                     else:
                         return "🟢"
 
-                df["Alerta"] = df["Temp. máx (°C)"].apply(alerta)
-                df["Origen"] = "Meteoblue"
+                df["🚨 Alerta"] = df["🌡️ Máx (°C)"].apply(alerta)
+                df["📡 Origen"] = "Meteoblue"
 
                 st.markdown(
                     df.to_html(index=False, justify="center", escape=False),
                     unsafe_allow_html=True
                 )
         else:
-            st.error("❌ No se encontraron datos diarios en la respuesta ('data_day').")
+            st.error("❌ No se encontraron datos diarios ('data_day').")
     else:
-        st.error(f"❌ Error al obtener datos: {response.status_code}")
+        st.error(f"❌ Error al contactar con la API: {response.status_code}")
