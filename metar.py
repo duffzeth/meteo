@@ -1,11 +1,8 @@
 import requests
+import json
 
-url = "https://weatherapi-com.p.rapidapi.com/alerts.json"
+url = "https://api.checkwx.com/metar/KJFK/decoded"
 
-querystring = {"q":"london"}
+response = requests.request("GET", url, headers={'X-API-Key': 'aafbb320264a4b3eacbc2fd57549fe76'})
 
-headers = {"x-rapidapi-host": "weatherapi-com.p.rapidapi.com"}
-
-response = requests.get(url, headers=headers, params=querystring)
-
-print(response.json())
+print(response.text)
