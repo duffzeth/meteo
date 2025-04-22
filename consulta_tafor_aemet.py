@@ -32,7 +32,8 @@ consultar = st.button("Consultar")
 if consultar:
     lat, lon = aeropuertos[aeropuerto]
     url = f"{BASE_URL}?lat={lat}&lon={lon}&apikey={API_KEY}&format=json"
-
+    
+    st.write("URL:", url)
     response = requests.get(url)
     if response.status_code == 200:
         response_json = response.json()
