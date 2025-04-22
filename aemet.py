@@ -1,111 +1,100 @@
-
 import streamlit as st
 import requests
-from datetime import datetime, timedelta
+import datetime
+import pandas as pd
 
-# Coordenadas del aeropuerto GCLP
+# Coordenadas de los aeropuertos
 aeropuertos = {
-    "GCLP - Gran Canaria": {"lat": 27.9319, "lon": -15.3866}
+    "GCLP - Gran Canaria": (27.9319, -15.3866),
+    "GCXO - Tenerife Norte": (28.4827, -16.3415),
+    "GCFV - Fuerteventura": (28.4527, -13.8638),
+    "GCRR - Lanzarote": (28.9455, -13.6052),
+    "GCLA - La Palma": (28.6265, -17.7556),
+    "GCHI - El Hierro": (27.8148, -17.8871),
+    "GCGM - La Gomera": (28.0296, -17.2146),
 }
 
-# CLAVE API FIJA COMO STRING
-api_key = "VM0G7IbYRsyppjgGdnhkaIQIhSjuNr5i"
+API_KEY = "Gqtw5BUEcQDIk4eb"
+BASE_URL = "https://my.meteoblue.com/packages/basic-day"
 
-# Función para consultar datos desde Windy API (solo parámetros compatibles)
-def obtener_datos_windy(lat, lon, api_key):
-    url = "https://api.windy.com/api/point-forecast/v2"
-    headers = {
-        "Content-Type": "application/json",
-        "Authorization": api_key
-    }
-    payload = {
-        "lat": lat,
-        "lon": lon,
-        "model": "gfs",
-        "parameters": ["wind", "temp", "precip"],
-        "levels": ["surface"]
-    }
-    response = requests.post(url, headers=headers, json=payload)
+# Configuración visual
+st.set_page_config(page_title="Meteo Aeropuertos Canarias", layout="centered")
+st.title("🌦️ Consulta meteorológica - Aeropuertos de Canarias")
+
+# UI
+aeropuerto = st.selectbox("✈️ Selecciona un aeropuerto", list(aeropuertos.keys()))
+fecha = st.date_input(
+    "📅 Selecciona una fecha (máx. 3 días vista)",
+    min_value=datetime.date.today(),
+    max_value=datetime.date.today() + datetime.timedelta(days=3)
+)
+consultar = st.button("🔍 Consultar")
+
+# Función para convertir pictocode a emoji
+def pictocode_to_emoji(code):
+    if code == 1:
+        return "☀️"
+    elif code == 2:
+        return "🌤️"
+    elif code in [3, 4]:
+        return "☁️"
+    elif code in [5, 6]:
+        return "🌧️"
+    else:
+        return "⛈️"
+
+if consultar:
+    lat, lon = aeropuertos[aeropuerto]
+    url = f"{BASE_URL}?lat={lat}&lon={lon}&apikey={API_KEY}&format=json"
+
+    response = requests.get(url)
     if response.status_code == 200:
-        return response.json()
+        response_json = response.json()
+
+        if "data_day" in response_json:
+            data = response_json["data_day"]
+
+            # Campo seguro
+            def get_field(name, default=0):
+                return data[name] if name in data else [default] * len(data["time"])
+
+            df = pd.DataFrame({
+                "Fecha": data["time"],
+                "🌡️ Máx (°C)": data["temperature_max"],
+                "🌡️ Mín (°C)": data["temperature_min"],
+                "🌬️ Viento medio (kt)": [round(v * 1.94384, 1) for v in data["windspeed_mean"]],
+                "🧭 Dirección (°)": get_field("winddirection"),
+                "☁️ Nubosidad (%)": get_field("cloudcover"),
+                "☁️ Techo nubes (m)": get_field("cloudbase_mean"),
+                "🌧️ Precipitación (mm)": data["precipitation"],
+                "💧 Humedad (%)": data["relativehumidity_mean"],
+                "🌂 Prob. lluvia (%)": data["precipitation_probability"],
+                "Icono": [pictocode_to_emoji(c) for c in get_field("pictocode")]
+            })
+
+            df = df[df["Fecha"] == fecha.strftime("%Y-%m-%d")]
+
+            if df.empty:
+                st.warning("⚠️ No hay datos para la fecha seleccionada.")
+            else:
+                # Añadir alerta visual
+                def alerta(temp):
+                    if temp >= 30:
+                        return "🔴"
+                    elif temp >= 25:
+                        return "🟡"
+                    else:
+                        return "🟢"
+
+                df["🚨 Alerta"] = df["🌡️ Máx (°C)"].apply(alerta)
+                df["📡 Origen"] = "Meteoblue"
+
+                # Mostrar tabla HTML
+                st.markdown(
+                    df.to_html(index=False, justify="center", escape=False),
+                    unsafe_allow_html=True
+                )
+        else:
+            st.error("❌ No se encontraron datos en 'data_day'.")
     else:
-        st.error(f"Error Windy API: {response.status_code}")
-        try:
-            st.json(response.json())
-        except:
-            st.text(response.text)
-        return None
-
-# Función para mostrar la tabla
-def mostrar_tabla_html(data):
-    html = f""" 
-    <style>
-        .weather-table {{
-            width: 100%;
-            border-collapse: collapse;
-            text-align: center;
-            font-family: 'Segoe UI', sans-serif;
-            margin-top: 20px;
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-        }}
-        .weather-table th {{
-            background-color: #007acc;
-            color: white;
-            padding: 14px;
-        }}
-        .weather-table td {{
-            background-color: #ffffff;
-            padding: 14px;
-            font-size: 16px;
-        }}
-        .footer {{
-            margin-top: 10px;
-            font-style: italic;
-            text-align: center;
-            color: #555;
-            font-size: 14px;
-        }}
-    </style>
-
-    <table class="weather-table">
-        <tr>
-            <th>💨 Viento</th>
-            <th>🌧️ Lluvia</th>
-            <th>🌡️ Temperatura</th>
-        </tr>
-        <tr>
-            <td>{data['viento']}</td>
-            <td>{data['lluvia']}</td>
-            <td>{data['temperatura']}</td>
-        </tr>
-    </table>
-    <div class="footer">🔎 Fuente: Windy API</div>
-    """
-    st.markdown(html, unsafe_allow_html=True)
-
-# Streamlit UI
-st.title("🌤️ Consulta Meteorológica para Aeropuertos")
-
-aeropuerto = st.selectbox("Selecciona un aeropuerto", list(aeropuertos.keys()))
-dia = st.date_input("Selecciona el día", min_value=datetime.today(), max_value=datetime.today() + timedelta(days=3))
-
-if st.button("Consultar"):
-    coords = aeropuertos[aeropuerto]
-    datos = obtener_datos_windy(coords["lat"], coords["lon"], api_key)
-
-    if datos and "wind" in datos["forecast"]:
-        idx = 0  # índice simple (puede ajustarse para precisión por hora)
-        viento = datos["forecast"]["wind"]["surface"]["u"]["values"][idx]
-        temperatura = datos["forecast"]["temp"]["surface"]["values"][idx]
-        lluvia = datos["forecast"]["precip"]["surface"]["values"][idx]
-
-        info = {
-            "viento": f"{int(viento)} km/h",
-            "lluvia": "Sí" if lluvia > 0 else "No",
-            "temperatura": f"{temperatura:.1f}°C"
-        }
-        mostrar_tabla_html(info)
-    else:
-        st.error("No se pudieron obtener los datos de Windy.")
+        st.error(f"❌ Error al contactar con la API: {response.status_code}")
