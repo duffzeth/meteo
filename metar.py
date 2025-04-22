@@ -1,5 +1,11 @@
-https://api.metar-taf.com/taf
-?api_key=xuopydYzOTeViLu2Ep0wJ3MRcg6T3LYO
-&v=2.3
-&locale=es-ES
-&id=LEMD
+import requests
+
+url = "https://weatherapi-com.p.rapidapi.com/alerts.json"
+
+querystring = {"q":"london"}
+
+headers = {"x-rapidapi-host": "weatherapi-com.p.rapidapi.com"}
+
+response = requests.get(url, headers=headers, params=querystring)
+
+print(response.json())
