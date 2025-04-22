@@ -46,7 +46,7 @@ if consultar:
                 "Temp. mín (°C)": data["temperature_min"],
                 "Temp. media (°C)": data["temperature_mean"],
                 "Viento medio (kt)": [round(v * 1.94384, 1) for v in data["windspeed_mean"]],
-                "Dirección viento (°)": data["winddirection"],
+                "Dirección viento (°)": data["winddirection_mean"],
                 #"Nubosidad (%)": get_field("cloudcover"),
                 #"Techo nubes (m)": get_field("cloudbase_mean"),
                 "Precipitación (mm)": data["precipitation"],
