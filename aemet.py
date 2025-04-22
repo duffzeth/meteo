@@ -5,7 +5,7 @@ import pandas as pd
 
 # === Configuración ===
 API_KEY = "Gqtw5BUEcQDIk4eb"
-BASE_URL = "https://my.meteoblue.com/packages/basic-1h_clouds-1h"
+BASE_URL = "https://my.meteoblue.com/packages/basic-1h_basic-day_clouds-1h_clouds-day"
 
 # Coordenadas de los aeropuertos
 aeropuertos = {
