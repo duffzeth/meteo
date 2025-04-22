@@ -33,6 +33,9 @@ if consultar:
     response = requests.get(url)
     if response.status_code == 200:
         data = response.json()["data_day"]
+        
+        # Filtrar solo por la fecha seleccionada
+        df = df[df["Fecha"] == fecha.strftime("%Y-%m-%d")]
 
         # Procesar datos por fecha seleccionada
         df = pd.DataFrame({
