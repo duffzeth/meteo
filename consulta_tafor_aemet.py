@@ -3,7 +3,7 @@ import requests
 import datetime
 import pandas as pd
 
-# Coordenadas de aeropuertos
+# === Configuración de aeropuertos ===
 aeropuertos = {
     "GCLP - Gran Canaria": (27.9319, -15.3866),
     "GCXO - Tenerife Norte": (28.4827, -16.3415),
@@ -17,20 +17,19 @@ aeropuertos = {
 API_KEY = "Gqtw5BUEcQDIk4eb"
 BASE_URL = "https://my.meteoblue.com/packages/basic-1h_basic-day_clouds-1h_clouds-day"
 
-# Configuración visual
+# === Configuración visual ===
 st.set_page_config(page_title="Meteo Aeropuertos Canarias", layout="centered")
 st.title("🌦️ Consulta meteorológica - Aeropuertos de Canarias")
 
-# UI
 aeropuerto = st.selectbox("✈️ Selecciona un aeropuerto", list(aeropuertos.keys()))
 fecha = st.date_input(
-    "📅 Selecciona una fecha (máx. 3 días vista)",
+    "📅 Selecciona una fecha (máximo 3 días vista)",
     min_value=datetime.date.today(),
     max_value=datetime.date.today() + datetime.timedelta(days=3)
 )
 consultar = st.button("🔍 Consultar")
 
-# Función pictograma
+# === Función para icono climático ===
 def pictocode_to_emoji(code):
     if code == 1:
         return "☀️"
@@ -43,53 +42,49 @@ def pictocode_to_emoji(code):
     else:
         return "⛈️"
 
+# === Consultar API ===
 if consultar:
     lat, lon = aeropuertos[aeropuerto]
     url = (
-    f"{BASE_URL}?lat={lat}&lon={lon}"
-    f"&apikey={API_KEY}&format=json"
-    f"&windspeed=kn&winddirection=degree"
-)
-
+        f"{BASE_URL}?lat={lat}&lon={lon}"
+        f"&apikey={API_KEY}&format=json"
+        f"&windspeed=kn&winddirection=degree"
+    )
 
     response = requests.get(url)
     if response.status_code == 200:
         response_json = response.json()
+
         if "data_day" in response_json and "data_1h" in response_json:
             data_day = response_json["data_day"]
             data_1h = response_json["data_1h"]
+            fecha_str = fecha.strftime("%Y-%m-%d")
 
-    # Convertir a DataFrame para facilitar manejo horario
-    df_hourly = pd.DataFrame({
-        "FechaHora": pd.to_datetime(data_1h["time"]),
-        "winddirection": data_1h.get("winddirection", [None]*len(data_1h["time"]))
-    })
+            # Extraer dirección de viento a las 12:00 UTC del día seleccionado
+            df_hourly = pd.DataFrame({
+                "FechaHora": pd.to_datetime(data_1h["time"]),
+                "winddirection": data_1h.get("winddirection", [None]*len(data_1h["time"]))
+            })
+            winddir = df_hourly[df_hourly["FechaHora"].dt.strftime("%Y-%m-%d %H:%M") == f"{fecha_str} 12:00"]
+            direccion_viento = winddir["winddirection"].values[0] if not winddir.empty else "N/D"
 
-    # Filtrar hora representativa (12:00 UTC) del día elegido
-    fecha_str = fecha.strftime("%Y-%m-%d")
-    winddir_dia = df_hourly[df_hourly["FechaHora"].dt.strftime("%Y-%m-%d %H:%M") == f"{fecha_str} 12:00"]
+            # Crear DataFrame diario
+            df = pd.DataFrame({
+                "Fecha": data_day["time"],
+                "🌡️ Máx (°C)": data_day["temperature_max"],
+                "🌡️ Mín (°C)": data_day["temperature_min"],
+                "🌬️ Viento medio (kt)": data_day["windspeed_mean"],  # ya en kt por parámetro
+                "🧭 Dirección (°)": [direccion_viento if t == fecha_str else "—" for t in data_day["time"]],
+                "☁️ Nubosidad (%)": data_day.get("cloudcover", ["—"] * len(data_day["time"])),
+                "☁️ Techo nubes (m)": data_day.get("cloudbase_mean", ["—"] * len(data_day["time"])),
+                "🌧️ Precipitación (mm)": data_day["precipitation"],
+                "💧 Humedad (%)": data_day["relativehumidity_mean"],
+                "🌂 Prob. lluvia (%)": data_day["precipitation_probability"],
+                "Icono": [pictocode_to_emoji(c) for c in data_day["pictocode"]],
+            })
 
-    direccion_viento = winddir_dia["winddirection"].values[0] if not winddir_dia.empty else "N/D"
-
-    # Crear tabla diaria
-    df = pd.DataFrame({
-        "Fecha": data_day["time"],
-        "🌡️ Máx (°C)": data_day["temperature_max"],
-        "🌡️ Mín (°C)": data_day["temperature_min"],
-        "🌬️ Viento medio (kt)": [round(v * 1.94384, 1) for v in data_day["windspeed_mean"]],
-        "🧭 Dirección (°)": [direccion_viento if t == fecha_str else "—" for t in data_day["time"]],
-        "☁️ Nubosidad (%)": data_day.get("cloudcover", ["—"] * len(data_day["time"])),
-        "☁️ Techo nubes (m)": data_day.get("cloudbase_mean", ["—"] * len(data_day["time"])),
-        "🌧️ Precipitación (mm)": data_day["precipitation"],
-        "💧 Humedad (%)": data_day["relativehumidity_mean"],
-        "🌂 Prob. lluvia (%)": data_day["precipitation_probability"],
-        "Icono": [pictocode_to_emoji(c) for c in data_day["pictocode"]]
-    })
-
-    df = df[df["Fecha"] == fecha_str]
-
-
-            df = df[df["Fecha"] == fecha.strftime("%Y-%m-%d")]
+            # Filtrar solo el día elegido
+            df = df[df["Fecha"] == fecha_str]
 
             if df.empty:
                 st.warning("⚠️ No hay datos para la fecha seleccionada.")
@@ -110,6 +105,6 @@ if consultar:
                     unsafe_allow_html=True
                 )
         else:
-            st.error("❌ No se encontraron datos diarios ('data_day').")
+            st.error("❌ La respuesta no contiene los datos esperados ('data_day' y 'data_1h').")
     else:
         st.error(f"❌ Error al contactar con la API: {response.status_code}")
