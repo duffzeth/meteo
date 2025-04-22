@@ -3,7 +3,7 @@ import requests
 import datetime
 import pandas as pd
 
-# Configuración de aeropuertos
+# Configuración de aeropuertos con coordenadas
 aeropuertos = {
     "GCLP - Gran Canaria": (27.9319, -15.3866),
     "GCXO - Tenerife Norte": (28.4827, -16.3415),
@@ -22,52 +22,57 @@ st.set_page_config(page_title="Meteo Aeropuertos Canarias", layout="centered")
 st.title("🌦️ Consulta meteorológica - Aeropuertos de Canarias")
 
 aeropuerto = st.selectbox("Selecciona un aeropuerto", list(aeropuertos.keys()))
-fecha = st.date_input("Selecciona una fecha (máximo 3 días vista)", min_value=datetime.date.today(), max_value=datetime.date.today() + datetime.timedelta(days=3))
+fecha = st.date_input(
+    "Selecciona una fecha (máximo 3 días vista)",
+    min_value=datetime.date.today(),
+    max_value=datetime.date.today() + datetime.timedelta(days=3)
+)
 consultar = st.button("Consultar")
 
 if consultar:
     lat, lon = aeropuertos[aeropuerto]
     url = f"{BASE_URL}?lat={lat}&lon={lon}&apikey={API_KEY}&format=json"
-    
-    st.write("URL:", url)
+
     response = requests.get(url)
     if response.status_code == 200:
-        data = response.json()["data_day"]
-        
-        # Filtrar solo por la fecha seleccionada
-        df = df[df["Fecha"] == fecha.strftime("%Y-%m-%d")]
+        response_json = response.json()
+        if "data_day" in response_json:
+            data = response_json["data_day"]
 
-        # Procesar datos por fecha seleccionada
-        df = pd.DataFrame({
-            "Fecha": data["time"],
-            "Temp. máx (°C)": data["temperature_max"],
-            "Temp. mín (°C)": data["temperature_min"],
-            "Viento medio (km/h)": data["windspeed_mean"],
-            "Precipitación (mm)": data["precipitation"],
-            "Humedad (%)": data["relativehumidity_mean"],
-            "Prob. lluvia (%)": data["precipitation_probability"]
-        })
+            df = pd.DataFrame({
+                "Fecha": data["time"],
+                "Temp. máx (°C)": data["temperature_max"],
+                "Temp. mín (°C)": data["temperature_min"],
+                "Temp. media (°C)": data["temperature_mean"],
+                "Viento medio (km/h)": data["windspeed_mean"],
+                "Precipitación (mm)": data["precipitation"],
+                "Humedad (%)": data["relativehumidity_mean"],
+                "Prob. lluvia (%)": data["precipitation_probability"]
+            })
 
-        df["FechaHora"] = pd.to_datetime(df["FechaHora"])
-        df = df[df["FechaHora"].dt.date == fecha]
+            # Filtrar por la fecha seleccionada
+            df = df[df["Fecha"] == fecha.strftime("%Y-%m-%d")]
 
-        # Agregar columna alerta
-        def alerta_color(temp):
-            if temp >= 30:
-                return "🔴"
-            elif temp >= 25:
-                return "🟡"
+            if df.empty:
+                st.warning("No hay datos disponibles para la fecha seleccionada.")
             else:
-                return "🟢"
+                # Agregar alerta por temperatura máxima
+                def alerta(temp_max):
+                    if temp_max >= 30:
+                        return "🔴"
+                    elif temp_max >= 25:
+                        return "🟡"
+                    else:
+                        return "🟢"
 
-        df["Alerta"] = df["Temperatura (°C)"].apply(alerta_color)
-        df["Origen"] = "Meteoblue"
+                df["Alerta"] = df["Temp. máx (°C)"].apply(alerta)
+                df["Origen"] = "Meteoblue"
 
-        # Mostrar tabla bonita en HTML
-        st.markdown(
-            df.to_html(index=False, justify="center", escape=False), 
-            unsafe_allow_html=True
-        )
-
+                st.markdown(
+                    df.to_html(index=False, justify="center", escape=False),
+                    unsafe_allow_html=True
+                )
+        else:
+            st.error("❌ No se encontraron datos diarios en la respuesta ('data_day').")
     else:
-        st.error(f"Error al obtener datos: {response.status_code}")
+        st.error(f"❌ Error al obtener datos: {response.status_code}")
