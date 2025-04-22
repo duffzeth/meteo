@@ -15,7 +15,7 @@ aeropuertos = {
 }
 
 API_KEY = "Gqtw5BUEcQDIk4eb"
-BASE_URL = "https://my.meteoblue.com/packages/basic-1h_basic-day_clouds-1h_clouds-day"
+BASE_URL = "https://my.meteoblue.com/packages/basic-1h_basic-day_clouds-1h_clouds-day?"
 
 # Streamlit UI
 st.set_page_config(page_title="Meteo Aeropuertos Canarias", layout="centered")
