@@ -49,6 +49,7 @@ if consultar:
         f"{BASE_URL}?lat={lat}&lon={lon}"
         f"&apikey={API_KEY}&format=json"
         f"&windspeed=kn&winddirection=degree"
+        f"&visibility=m"
     )
 
     response = requests.get(url)
