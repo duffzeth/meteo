@@ -50,25 +50,39 @@ if consultar:
     response = requests.get(url)
     if response.status_code == 200:
         response_json = response.json()
-        if "data_day" in response_json:
-            data = response_json["data_day"]
+        if "data_day" in response_json and "data_1h" in response_json:
+    data_day = response_json["data_day"]
+    data_1h = response_json["data_1h"]
 
-            def get_field(name, default=0):
-                return data[name] if name in data else [default] * len(data["time"])
+    # Convertir a DataFrame para facilitar manejo horario
+    df_hourly = pd.DataFrame({
+        "FechaHora": pd.to_datetime(data_1h["time"]),
+        "winddirection": data_1h.get("winddirection", [None]*len(data_1h["time"]))
+    })
 
-            df = pd.DataFrame({
-                "Fecha": data["time"],
-                "🌡️ Máx (°C)": data["temperature_max"],
-                "🌡️ Mín (°C)": data["temperature_min"],
-                "🌬️ Viento medio (kt)": [round(v * 1.94384, 1) for v in get_field("windspeed_mean")],
-                "🧭 Dirección (°)": get_field("winddirection", "N/A"),
-                "☁️ Nubosidad (%)": get_field("cloudcover", "N/A"),
-                "☁️ Techo nubes (m)": get_field("cloudbase_mean", "N/A"),
-                "🌧️ Precipitación (mm)": get_field("precipitation"),
-                "💧 Humedad (%)": get_field("relativehumidity_mean"),
-                "🌂 Prob. lluvia (%)": get_field("precipitation_probability"),
-                "Icono": [pictocode_to_emoji(c) for c in get_field("pictocode")]
-            })
+    # Filtrar hora representativa (12:00 UTC) del día elegido
+    fecha_str = fecha.strftime("%Y-%m-%d")
+    winddir_dia = df_hourly[df_hourly["FechaHora"].dt.strftime("%Y-%m-%d %H:%M") == f"{fecha_str} 12:00"]
+
+    direccion_viento = winddir_dia["winddirection"].values[0] if not winddir_dia.empty else "N/D"
+
+    # Crear tabla diaria
+    df = pd.DataFrame({
+        "Fecha": data_day["time"],
+        "🌡️ Máx (°C)": data_day["temperature_max"],
+        "🌡️ Mín (°C)": data_day["temperature_min"],
+        "🌬️ Viento medio (kt)": [round(v * 1.94384, 1) for v in data_day["windspeed_mean"]],
+        "🧭 Dirección (°)": [direccion_viento if t == fecha_str else "—" for t in data_day["time"]],
+        "☁️ Nubosidad (%)": data_day.get("cloudcover", ["—"] * len(data_day["time"])),
+        "☁️ Techo nubes (m)": data_day.get("cloudbase_mean", ["—"] * len(data_day["time"])),
+        "🌧️ Precipitación (mm)": data_day["precipitation"],
+        "💧 Humedad (%)": data_day["relativehumidity_mean"],
+        "🌂 Prob. lluvia (%)": data_day["precipitation_probability"],
+        "Icono": [pictocode_to_emoji(c) for c in data_day["pictocode"]]
+    })
+
+    df = df[df["Fecha"] == fecha_str]
+
 
             df = df[df["Fecha"] == fecha.strftime("%Y-%m-%d")]
 
